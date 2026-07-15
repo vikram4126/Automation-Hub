@@ -5,6 +5,8 @@ const Innovation = () => {
   const [showIdeaModal, setShowIdeaModal] = useState(false);
   const [newIdeaTitle, setNewIdeaTitle] = useState('');
   const [duplicateWarning, setDuplicateWarning] = useState(null);
+  const [selectedIdea, setSelectedIdea] = useState(null);
+  const [newComment, setNewComment] = useState('');
 
   const ideas = [
     { id: 1, title: 'AI Chatbot for IT Helpdesk', desc: 'A Copilot bot in Teams that answers basic IT questions and resets passwords automatically.', author: 'Vikram', votes: 45, comments: 12 },
@@ -47,7 +49,7 @@ const Innovation = () => {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {ideas.map(idea => (
-          <div key={idea.id} className="card" style={{ display: 'flex', gap: 24 }}>
+          <div key={idea.id} className="card" style={{ display: 'flex', gap: 24, cursor: 'pointer' }} onClick={() => setSelectedIdea(idea)}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 60 }}>
               <button style={{ color: 'var(--primary-blue)', backgroundColor: 'rgba(30,73,226,0.1)', padding: 12, borderRadius: 8 }}>
                 <ThumbsUp size={20} />
@@ -130,6 +132,88 @@ const Innovation = () => {
           </div>
         </div>
       )}
+
+      {/* View Idea & Comments Modal */}
+      {selectedIdea && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
+          display: 'flex', justifyContent: 'center', alignItems: 'center',
+          animation: 'fadeIn 0.2s ease-out'
+        }} onClick={() => setSelectedIdea(null)}>
+          <div style={{
+            backgroundColor: 'var(--card-white)', width: '600px', borderRadius: 'var(--radius-lg)',
+            boxShadow: 'var(--shadow-lg)', overflow: 'hidden',
+            display: 'flex', flexDirection: 'column',
+            maxHeight: '90vh',
+            animation: 'fadeSlideUp 0.3s ease-out'
+          }} onClick={(e) => e.stopPropagation()}>
+            
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <h2 style={{ fontSize: '1.4rem', color: 'var(--primary-blue)', margin: '0 0 8px 0' }}>{selectedIdea.title}</h2>
+                <div style={{ display: 'flex', gap: 16, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><User size={14} /> {selectedIdea.author}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><ThumbsUp size={14} /> {selectedIdea.votes} Votes</span>
+                </div>
+              </div>
+              <button onClick={() => setSelectedIdea(null)} style={{ color: 'var(--text-muted)' }}><X size={20} /></button>
+            </div>
+
+            <div style={{ padding: '24px', overflowY: 'auto' }}>
+              <p style={{ fontSize: '0.95rem', color: 'var(--text-dark)', lineHeight: 1.6, marginBottom: 24, padding: 16, backgroundColor: 'var(--bg-color)', borderRadius: 'var(--radius-md)' }}>
+                {selectedIdea.desc}
+              </p>
+
+              <h3 style={{ fontSize: '1.1rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-dark)' }}>
+                <MessageCircle size={18} /> Discussion ({selectedIdea.comments})
+              </h3>
+              
+              {/* Dummy Comments */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 24 }}>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: 'var(--primary-blue)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 600 }}>SD</div>
+                  <div style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.02)', padding: '12px 16px', borderRadius: '0 var(--radius-md) var(--radius-md) var(--radius-md)' }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4 }}>System Admin <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: 8 }}>2 hours ago</span></div>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-dark)' }}>This is a great idea. We could really use this in the HR department!</div>
+                  </div>
+                </div>
+                {newComment && (
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: 'var(--success-green)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 600 }}>ME</div>
+                    <div style={{ flex: 1, backgroundColor: 'rgba(0,184,148,0.1)', padding: '12px 16px', borderRadius: '0 var(--radius-md) var(--radius-md) var(--radius-md)' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4 }}>You <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: 8 }}>Just now</span></div>
+                      <div style={{ fontSize: '0.9rem', color: 'var(--text-dark)' }}>{newComment}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Comment Input */}
+              <div style={{ display: 'flex', gap: 12 }}>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  placeholder="Write a comment..." 
+                  style={{ flex: 1 }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setNewComment(e.target.value);
+                      e.target.value = '';
+                    }
+                  }}
+                />
+                <button className="btn-primary" onClick={() => {
+                  const input = document.querySelector('input[placeholder="Write a comment..."]');
+                  setNewComment(input.value);
+                  input.value = '';
+                }}>Post</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
       `}</style>

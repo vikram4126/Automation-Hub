@@ -70,9 +70,9 @@ An enterprise internal portal where employees can:
 | **ParentProjectName** | Single line text | ❌ | Name of existing app being enhanced |
 | **Status** | Choice | ✅ | Open, Picked, Development, Testing, Completed, Duplicate |
 | **Priority** | Choice | ✅ | Low, Medium, High, Critical |
-| **Category** | Choice | ✅ | Power Apps, Power Automate, Power BI, React, Vue.js, Cloud Code, Other |
+| **Category** | Choice (Multi-select) | ✅ | Power Apps, Power Automate, Power BI, React, Vue.js, Cloud Code, AI Builder, Other |
 | **SubmittedBy** | Person or Group | ✅ | Auto-fill from current user |
-| **AssignedTo** | Person or Group | ❌ | Set by Flow or developer |
+| **AssignedTo** | Person or Group (Multi-select) | ❌ | Set by Flow or developers (Supports Co-owners) |
 | **Frequency** | Choice | ✅ | Daily, Weekly, Monthly, Ad-hoc |
 | **TimeSpent** | Choice | ✅ | 30 Minutes, 1 Hour, 2 Hours, More |
 | **IdealSolution** | Single line text | ❌ | e.g. "Automated Dashboard" |
@@ -136,26 +136,6 @@ An enterprise internal portal where employees can:
 | form | — | Power Apps (Canvas App) | High | 4 Weeks | No |
 | app | — | Power Apps (Canvas App) | High | 4 Weeks | No |
 | dashboard | — | Power BI Dashboard | Medium | 2 Weeks | No |
-| report | — | Power BI Dashboard | Medium | 2 Weeks | No |
-| react | — | Custom React Web App | Very High | 6+ Weeks | No |
-| chatbot | — | Power Virtual Agents | Medium | 3 Weeks | No |
-
----
-
-### LIST 4: `Innovation_Ideas`
-**Purpose:** Stores user posted ideas for the Innovation Board.
-
-| Column Name | SharePoint Type | Required | Notes |
-|---|---|---|---|
-| **Title** | Single line text | ✅ | Idea title |
-| **Description** | Multiple lines of text | ✅ | Idea description |
-| **PostedBy** | Person or Group | ✅ | Auto-filled |
-| **Votes** | Number | ✅ | Default: 0 |
-| **CommentsCount** | Number | ❌ | Default: 0 |
-| **PostedOn** | Date and Time | ✅ | Auto = Created |
-
----
-
 ### LIST 5: `Knowledge_Articles`
 **Purpose:** Knowledge Base articles and video links.
 
@@ -575,6 +555,74 @@ rectTaskProgress.Width = (ThisItem.Progress / 100) * Parent.Width
 lblTaskProgress.Text = Text(ThisItem.Progress) & "%"
 ```
 
+#### Developer KPI — Total Hours Saved for Team:
+> Add this KPI card at the TOP of the My Picked Tasks screen so the developer can see their total impact.
+
+**How the formula works:**
+When a user submits a request, they enter:
+- **TimeBeforeHrs** — Hours the task currently takes (e.g. 5 hrs)
+- **TimeAfterHrs** — Hours expected after automation (e.g. 0.5 hrs)
+- **Frequency** — How often the task occurs (Daily / Weekly / Monthly / Ad-hoc)
+
+**Net Saving per Occurrence = TimeBeforeHrs − TimeAfterHrs**
+**Annual Hours Saved = Net Saving × Frequency Multiplier (Daily=250, Weekly=52, Monthly=12, Ad-hoc=1)**
+
+```
+// KPI Card: Developer's Total Hours Saved (Oct–Sep FY)
+lblDevTotalSaved.Text =
+    Text(
+        Sum(
+            Filter(Automation_Requests,
+                AssignedTo.Email = varCurrentUser.Email,
+                Status.Value = "Completed"
+            ),
+            (TimeBeforeHrs - TimeAfterHrs) *
+            Switch(Frequency.Value,
+                "Daily",   250,
+                "Weekly",   52,
+                "Monthly",  12,
+                "Ad-hoc",   1,
+                0
+            )
+        )
+    ) & " hrs saved for team (FY Oct–Sep)"
+
+// Sub-label: Count of completed tasks
+lblDevTasksDone.Text =
+    Text(
+        CountRows(Filter(Automation_Requests,
+            AssignedTo.Email = varCurrentUser.Email,
+            Status.Value = "Completed"
+        ))
+    ) & " automations delivered"
+```
+
+**Power Apps Steps to add this KPI card:**
+1. On `ScreenMyTasks`, add a **Container** at the top (above the gallery)
+2. Set Width = `App.Width - 250` (full width minus sidebar)
+3. Inside it, add 2 **Label** controls:
+   - `lblDevTotalSaved` — use formula above, FontSize = 22, Color = `RGBA(0,184,148,1)`
+   - `lblDevTasksDone` — use formula above, FontSize = 14, Color = `var(--text-muted)`
+4. Add a green left-border rectangle for visual styling
+
+**Also add to Leaderboard gallery card:**
+```
+// Show developer's annual hours saved on their leaderboard card
+lblLeaderHrsSaved.Text =
+    Text(
+        Sum(
+            Filter(Automation_Requests,
+                AssignedTo.Email = ThisItem.Employee.Email,
+                Status.Value = "Completed"
+            ),
+            (TimeBeforeHrs - TimeAfterHrs) *
+            Switch(Frequency.Value,
+                "Daily", 250, "Weekly", 52, "Monthly", 12, "Ad-hoc", 1, 0
+            )
+        )
+    ) & " hrs/yr saved"
+```
+
 #### "Update Progress" Button → Opens Popup:
 ```
 btnUpdateProgress.OnSelect:
@@ -714,10 +762,37 @@ lblBadge.Color = Switch(ThisItem.Badge,
 ---
 
 ### SCREEN: Reports
-- Embed a **Power BI Tile** from a Power BI report connected to the `Automation_Requests` list.
-- Use Power BI → Get Data → SharePoint List → Connect to `Automation_Requests`.
-- Create visuals: Pie chart (by department), Bar chart (requests by month), KPI cards.
-- In Power Apps: Insert → **Power BI Tile** → Select your workspace and report.
+
+#### Native Pie Chart (Requests by Department):
+1. Insert → **Charts** → **Pie Chart**
+2. Set Items to group data by Department:
+```
+AddColumns(
+    GroupBy(Automation_Requests, "Department", "GroupedData"),
+    "Count",
+    CountRows(GroupedData)
+)
+```
+
+#### KPI Cards (Total Hours Saved):
+1. Insert a **Label** for the Total Hours Saved KPI.
+2. Calculate the total dynamically using this formula:
+```
+Text(
+    Sum(
+        Filter(Automation_Requests, Status.Value = "Completed"),
+        (TimeBeforeHrs - TimeAfterHrs) *
+        Switch(Frequency.Value,
+            "Daily", 250, "Weekly", 52, "Monthly", 12, "Ad-hoc", 1, 0
+        )
+    )
+) & " hrs saved"
+```
+
+#### Detailed Breakdown Table (Drill-down view):
+1. Insert → **Data table** (or a Gallery).
+2. Set Items to: `Filter(Automation_Requests, Status.Value = "Completed")`
+3. Add columns: `RequestTitle`, `Department`, `AssignedTo`, `Category`.
 
 ---
 
@@ -821,35 +896,64 @@ Step 3 (If Yes): Calculate Points Earned
     @{if(equals(triggerBody()?['Frequency/Value'], 'Daily'), 500,
        if(equals(triggerBody()?['Frequency/Value'], 'Weekly'), 300, 100))}
 
-Step 4: Get developer's current stats
+Step 4: Loop through Co-Owners
+  - Action: Apply to each
+  - Select an output from previous steps: @{triggerBody()?['AssignedTo']}
+
+  Step 4.1: Get developer's current stats
+    - Action: Get items (SharePoint)
+    - List: User_Stats
+    - Filter: Employee/Email eq '@{item()?['Email']}'
+
+  Step 4.2: Calculate new stats (Apps, Flows, Points)
+    - Condition: Is triggerBody()?['Category/Value'] equal to "Power Automate" or "Cloud Code"?
+      - If Yes (It's a Flow):
+        - Compose NewFlows: @{add(int(outputs('Get_items')?['body/value'][0]?['FlowsBuilt']), 1)}
+        - Compose NewApps: @{int(outputs('Get_items')?['body/value'][0]?['AppsBuilt'])}
+      - If No (It's an App):
+        - Compose NewFlows: @{int(outputs('Get_items')?['body/value'][0]?['FlowsBuilt'])}
+        - Compose NewApps: @{add(int(outputs('Get_items')?['body/value'][0]?['AppsBuilt']), 1)}
+    - Compose NewPoints: @{add(int(outputs('Get_items')?['body/value'][0]?['TotalPoints']), outputs('Points_Earned'))}
+
+  Step 4.3: Calculate new badge
+    - Compose (Switch on new total points):
+      >= 5000 → "Automation Hero"
+      >= 3000 → "Flow Expert"
+      >= 1000 → "Rising Star"
+      default → "Innovator"
+
+  Step 4.4: Update User_Stats
+    - Action: Update item (SharePoint)
+    - List: User_Stats
+    - ID: @{outputs('Get_items')?['body/value'][0]?['ID']}
+    - TotalPoints: @{outputs('NewPoints')}
+    - AppsBuilt: @{outputs('NewApps')}
+    - FlowsBuilt: @{outputs('NewFlows')}
+    - Badge: @{outputs('New_Badge')}
+    - LastUpdated: @{utcNow()}
+
+  Step 4.5: Condition — Did badge change?
+    - Previous Badge vs New Badge
+    - If Yes: Send Teams celebration message
+      "🏆 Congratulations @{item()?['DisplayName']}!
+      You've earned a new badge: @{outputs('New_Badge')}!
+      Keep up the great work on Automation Hub!"
+
+Step 9: Get Submitter's current stats (Idea Submitter Reward)
   - Action: Get items (SharePoint)
   - List: User_Stats
-  - Filter: Employee/Email eq '@{triggerBody()?['AssignedTo/Email']}'
+  - Filter: Employee/Email eq '@{triggerBody()?['SubmittedBy/Email']}'
 
-Step 5: Calculate new total
-  - Compose: @{add(int(outputs('Get_items')?['body/value'][0]?['TotalPoints']), outputs('Points_Earned'))}
+Step 10: Calculate Submitter Bonus
+  - Compose NewSubmitterPoints: @{add(int(outputs('Get_items_Submitter')?['body/value'][0]?['TotalPoints']), 200)}
 
-Step 6: Calculate new badge
-  - Compose (Switch on new total):
-    >= 5000 → "Automation Hero"
-    >= 3000 → "Flow Expert"
-    >= 1000 → "Rising Star"
-    default → "Innovator"
-
-Step 7: Update User_Stats
+Step 11: Update User_Stats for Submitter
   - Action: Update item (SharePoint)
   - List: User_Stats
-  - ID: @{outputs('Get_items')?['body/value'][0]?['ID']}
-  - TotalPoints: @{outputs('New_Total')}
-  - Badge: @{outputs('New_Badge')}
+  - ID: @{outputs('Get_items_Submitter')?['body/value'][0]?['ID']}
+  - TotalPoints: @{outputs('NewSubmitterPoints')}
   - LastUpdated: @{utcNow()}
-
-Step 8: Condition — Did badge change?
-  - Previous Badge vs New Badge
-  - If Yes: Send Teams celebration message
-    "🏆 Congratulations @{triggerBody()?['AssignedTo/DisplayName']}!
-    You've earned a new badge: @{outputs('New_Badge')}!
-    Keep up the great work on Automation Hub!"
+  - Note: Send them a Teams message: "🎉 Your automation idea was just completed! You earned 200 bonus points!"
 ```
 
 ---
@@ -878,6 +982,53 @@ Step 3 (If Yes): Send Email
     Assigned To: @{triggerBody()?['AssignedTo/DisplayName']}
     
     Login to Automation Hub to view details."
+```
+
+---
+
+### FLOW 4: Export to Excel (From Reports Screen)
+**Trigger:** Power Apps (V2)
+
+If leadership clicks "Export to Excel" on the Reports dashboard in Power Apps, this flow generates the report and emails it to them.
+
+```
+Step 1: Trigger
+  - Power Apps (V2)
+  - Ask in PowerApps: UserEmail (to know who to send it to)
+
+Step 2: Get items
+  - Action: Get items (SharePoint)
+  - List: Automation_Requests
+  - Filter: Status eq 'Completed'
+
+Step 3: Select columns for report
+  - Action: Select (Data Operations)
+  - From: @{outputs('Get_items')?['body/value']}
+  - Map:
+      Project Name: @{item()?['RequestTitle']}
+      Department: @{item()?['Department']}
+      Developer: @{item()?['AssignedTo/DisplayName']}
+      Technology: @{item()?['Category/Value']}
+      Hours Saved: @{sub(item()?['TimeBeforeHrs'], item()?['TimeAfterHrs'])}
+
+Step 4: Create CSV
+  - Action: Create CSV table
+  - From: @{outputs('Select')}
+
+Step 5: Send Email
+  - Action: Send an email (V2)
+  - To: @{triggerBody()['text']} (the UserEmail from Power Apps)
+  - Subject: "Your Automation Hub Detailed Report"
+  - Body: "Attached is the detailed breakdown of all completed automation projects."
+  - Attachments Name: Automation_Report.csv
+  - Attachments Content: @{outputs('Create_CSV_table')}
+```
+
+**Power Apps Formula for Export Button:**
+```
+btnExport.OnSelect:
+FlowExportToExcel.Run(User().Email);
+Notify("Your report is being generated and will be emailed to you shortly!", NotificationType.Success)
 ```
 
 ---

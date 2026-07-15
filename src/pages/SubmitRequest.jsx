@@ -6,8 +6,19 @@ const SubmitRequest = () => {
   const [desc, setDesc] = useState('');
   const [aiSuggestion, setAiSuggestion] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
-  const [requestType, setRequestType] = useState('new'); // 'new' or 'enhancement'
+  const [requestType, setRequestType] = useState('new');
   const [enhancementReason, setEnhancementReason] = useState('');
+  const [timeBeforeHrs, setTimeBeforeHrs] = useState('');
+
+  const freqMultiplier = { 'Daily': 250, 'Weekly': 52, 'Monthly': 12, 'Ad-hoc': 1 };
+  // ROI shown to user = max potential (full hours saved, Time After = 0)
+  // Actual net saving will be confirmed by developer in My Picked Tasks
+  const annualHours = parseFloat(timeBeforeHrs || 0) > 0 && selectedFreq
+    ? (parseFloat(timeBeforeHrs) * (freqMultiplier[selectedFreq] || 0)).toFixed(0)
+    : null;
+  const monthlyHours = parseFloat(timeBeforeHrs || 0) > 0 && selectedFreq
+    ? (parseFloat(timeBeforeHrs) * (freqMultiplier[selectedFreq] || 0) / 12).toFixed(1)
+    : null;
 
   useEffect(() => {
     if (desc.length < 15) {
@@ -80,9 +91,6 @@ const SubmitRequest = () => {
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', margin: 0 }}>Describe your manual process and our Copilot will recommend the best approach.</p>
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
-          <button className="btn-secondary" style={{ padding: '6px 16px', fontSize: '0.9rem' }}>
-            <Save size={16} /> Save Draft
-          </button>
           <button className="btn-primary" style={{ backgroundColor: 'var(--success-green)', padding: '6px 16px', fontSize: '0.9rem' }}>
             {requestType === 'enhancement' ? 'Submit Enhancement' : 'Submit Request'} <Check size={16} />
           </button>
@@ -190,15 +198,42 @@ const SubmitRequest = () => {
                 </select>
               </div>
               <div>
-                <label className="form-label" style={{ fontSize: '0.95rem' }}>Time Spent</label>
-                <select className="form-control" style={{ fontSize: '0.9rem', padding: '10px 12px' }}>
-                  <option value="" disabled>Select...</option>
-                  <option>30 Minutes</option>
-                  <option>1 Hour</option>
-                  <option>2 Hours</option>
-                </select>
+                <label className="form-label" style={{ fontSize: '0.95rem' }}>Time BEFORE Automation (hrs)</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  style={{ fontSize: '0.9rem', padding: '10px 12px' }}
+                  placeholder="e.g. 5"
+                  min="0" step="0.5"
+                  value={timeBeforeHrs}
+                  onChange={(e) => setTimeBeforeHrs(e.target.value)}
+                />
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4 }}>Hours currently spent per occurrence</div>
               </div>
             </div>
+
+            {/* ROI Estimate Banner — based on Time BEFORE only (developer will confirm Time After) */}
+            {annualHours && (
+              <div style={{ padding: '12px 16px', backgroundColor: 'rgba(0,184,148,0.08)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(0,184,148,0.3)', marginBottom: 16, animation: 'fadeSlideUp 0.3s ease-out' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--success-green)', marginBottom: 4 }}>⚡ Potential ROI Estimate (Oct–Sep FY)</div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: 10 }}>Based on your current time. Developer will confirm actual saving after automation is built.</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, fontSize: '0.8rem' }}>
+                  <div>
+                    <div style={{ color: 'var(--text-muted)' }}>Per Occurrence</div>
+                    <div style={{ fontWeight: 700 }}>{timeBeforeHrs} hrs</div>
+                  </div>
+                  <div>
+                    <div style={{ color: 'var(--text-muted)' }}>Per Month (max)</div>
+                    <div style={{ fontWeight: 700 }}>{monthlyHours} hrs</div>
+                  </div>
+                  <div>
+                    <div style={{ color: 'var(--text-muted)' }}>Per Year (max)</div>
+                    <div style={{ fontWeight: 700, color: 'var(--success-green)', fontSize: '1rem' }}>{annualHours} hrs</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="form-group" style={{ marginBottom: 16 }}>
               <label className="form-label" style={{ fontSize: '0.95rem' }}>Ideal Solution</label>
               <input type="text" className="form-control" style={{ fontSize: '0.9rem', padding: '10px 12px' }} placeholder="e.g. Automated Dashboard" />
@@ -265,7 +300,11 @@ const SubmitRequest = () => {
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
                     <strong>Complexity:</strong> {aiSuggestion.comp}<br/>
                     <strong>Est. Time:</strong> {aiSuggestion.time}<br/>
-                    <strong>ROI:</strong> {selectedFreq === 'Weekly' ? 'High (~104 hrs/yr)' : selectedFreq === 'Daily' ? 'Very High (~250 hrs/yr)' : 'Medium'}
+                    {annualHours ? (
+                      <span><strong>ROI (Oct–Sep FY):</strong> <span style={{ color: 'var(--success-green)', fontWeight: 700 }}>{annualHours} hrs/year saved</span> ({monthlyHours} hrs/month)</span>
+                    ) : (
+                      <span><strong>ROI:</strong> Fill in time fields above to calculate</span>
+                    )}
                   </div>
                 </div>
               </div>

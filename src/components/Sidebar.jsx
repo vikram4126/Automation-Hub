@@ -8,8 +8,7 @@ import {
   UserCheck, 
   Lightbulb, 
   Trophy, 
-  BarChart2, 
-  BookOpen,
+  BarChart2,
   Settings,
   Cpu
 } from 'lucide-react';
@@ -27,7 +26,6 @@ const Sidebar = () => {
     { name: 'Innovation Board', path: '/innovation', icon: Lightbulb, roles: [ROLES.USER, ROLES.LEADERSHIP] },
     { name: 'Leaderboard', path: '/leaderboard', icon: Trophy, roles: [ROLES.USER, ROLES.LEADERSHIP] },
     { name: 'Reports', path: '/reports', icon: BarChart2, roles: [ROLES.LEADERSHIP] },
-    { name: 'Knowledge Base', path: '/kb', icon: BookOpen, roles: [ROLES.USER] },
     { name: 'Admin Panel', path: '/admin', icon: Settings, roles: [ROLES.ADMIN] },
   ];
 

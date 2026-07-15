@@ -1,8 +1,17 @@
 :root {
-  --primary-blue: #00338D;
-  --secondary-blue: #1E49E2;
-  --success-green: #00B894;
-  --accent-purple: #7213EA;
+  /* KPMG Primary Palette */
+  --primary-blue: #00338d;
+  --secondary-blue: #1e49e2;
+  --dark-blue: #0c233c;
+  --pacific-blue: #00b8f5;
+  --accent-purple: #7213ea;
+  --kpmg-pink: #fd349c;
+
+  /* KPMG Secondary Palette (for success/info states) */
+  --success-green: #00c0ae;
+  --dark-green: #098e7e;
+  
+  /* UI Colors */
   --bg-color: #F5F7FA;
   --card-white: #FFFFFF;
   
