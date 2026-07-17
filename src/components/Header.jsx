@@ -40,17 +40,6 @@ const Header = () => {
           </select>
         </div>
 
-        <button className="icon-btn">
-          <HelpCircle size={20} />
-        </button>
-        <button className="icon-btn" style={{ position: 'relative' }}>
-          <Bell size={20} />
-          <span style={{
-            position: 'absolute', top: 6, right: 6, width: 8, height: 8, 
-            backgroundColor: 'var(--success-green)', borderRadius: '50%',
-            border: '2px solid white'
-          }}></span>
-        </button>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 8 }}>
           <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' }}>

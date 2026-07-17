@@ -9,6 +9,8 @@ const BrowseRequests = () => {
   const [newMate, setNewMate] = useState({ name: '', share: '' });
   const [dupJustification, setDupJustification] = useState('');
   const [showPickAnyway, setShowPickAnyway] = useState(false);
+  const [showFlagExisting, setShowFlagExisting] = useState(false);
+  const [existingTeamDetails, setExistingTeamDetails] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   
   // Filter States
@@ -67,7 +69,8 @@ const BrowseRequests = () => {
       benefits: 'Eliminate manual errors, track onboarding status in real-time.',
       attachments: 1,
       aiTech: 'Power Apps (Canvas App)', aiComp: 'High', aiTime: '4 Weeks',
-      isPotentialDuplicate: true, duplicateOf: 'REQ-023', pickedBy: null
+      isPotentialDuplicate: true, duplicateOf: 'REQ-023', pickedBy: null,
+      isApproved: false, approvedAt: null
     },
     { 
       id: 'REQ-027', title: 'Leave Request System', category: 'Power Apps', priority: 'Medium', status: 'picked', hours: 80, date: 'Oct 20',
@@ -87,7 +90,8 @@ const BrowseRequests = () => {
       idealSolution: 'A Flow that auto-merges files every Monday morning and emails the report.',
       benefits: 'Save full 4 hrs/week, zero manual errors in finance reports.',
       attachments: 3,
-      aiTech: 'Power Automate (Cloud Flow)', aiComp: 'Low', aiTime: '1 Week', pickedBy: null
+      aiTech: 'Power Automate (Cloud Flow)', aiComp: 'Low', aiTime: '1 Week', pickedBy: null,
+      isApproved: true, approvedAt: '22 Oct 2026, 11:30 AM'
     },
     { 
       id: 'REQ-029', title: 'PPT Presentation Generator', category: 'Cloud Code', priority: 'Medium', status: 'picked', hours: 60, date: 'Oct 24',
@@ -254,6 +258,17 @@ const BrowseRequests = () => {
                   )}
 
                   <div className="card-title">{task.title}</div>
+                  
+                  {task.status === 'open' && task.isApproved && (
+                    <div style={{ fontSize: '0.73rem', color: 'var(--success-green)', fontWeight: 600, marginBottom: 8 }}>
+                      ✅ Approved on {task.approvedAt}
+                    </div>
+                  )}
+                  {task.status === 'open' && task.isApproved === false && (
+                    <div style={{ fontSize: '0.73rem', color: '#D68910', fontWeight: 600, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      🔒 Awaiting Manager Approval
+                    </div>
+                  )}
                   
                   <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
                     <span className={`badge ${getPriorityColor(task.priority)}`}>{task.priority}</span>
@@ -538,20 +553,41 @@ const BrowseRequests = () => {
                 </div>
               )}
 
+              {/* Flag Existing Form */}
+              {selectedTask.status === 'open' && showFlagExisting && (
+                <div style={{ marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                    🛑 <strong style={{ color: '#D68910' }}>Flag as Existing Solution:</strong> If another team already built this, provide details so we can redirect the user.
+                  </div>
+                  <textarea
+                    rows={2}
+                    placeholder="Which team has this? Please provide any link or contact info..."
+                    value={existingTeamDetails}
+                    onChange={e => setExistingTeamDetails(e.target.value)}
+                    style={{
+                      width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-sm)',
+                      border: '1px solid #D68910', fontSize: '0.83rem', resize: 'none',
+                      fontFamily: 'inherit', boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+              )}
+
               {/* Footer Buttons (All in one row) */}
               <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10 }}>
-                <button className="btn-secondary" onClick={() => { setSelectedTask(null); setShowPickAnyway(false); setDupJustification(''); }}>Close</button>
+                <button className="btn-secondary" onClick={() => { setSelectedTask(null); setShowPickAnyway(false); setDupJustification(''); setShowFlagExisting(false); setExistingTeamDetails(''); }}>Close</button>
                 
                 {selectedTask.status === 'open' && selectedTask.isPotentialDuplicate && !showPickAnyway && (
                   <>
                     <button 
                       style={{ 
                         backgroundColor: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border-color)', 
-                        borderRadius: 'var(--radius-sm)', padding: '7px 14px', fontWeight: 600, fontSize: '0.84rem', cursor: 'pointer' 
+                        borderRadius: 'var(--radius-sm)', padding: '7px 14px', fontWeight: 600, fontSize: '0.84rem', cursor: selectedTask.isApproved === false ? 'not-allowed' : 'pointer', opacity: selectedTask.isApproved === false ? 0.5 : 1 
                       }} 
-                      onClick={() => setShowPickAnyway(true)}
+                      onClick={() => selectedTask.isApproved !== false && setShowPickAnyway(true)}
+                      disabled={selectedTask.isApproved === false}
                     >
-                      Pick Anyway
+                      {selectedTask.isApproved === false ? '🔒 Locked' : 'Pick Anyway'}
                     </button>
                     <button 
                       style={{ 
@@ -583,7 +619,37 @@ const BrowseRequests = () => {
                 )}
 
                 {selectedTask.status === 'open' && !selectedTask.isPotentialDuplicate && (
-                  <button className="btn-primary" onClick={() => setSelectedTask(null)}>Pick This Task</button>
+                  selectedTask.isApproved === false ? (
+                    <button className="btn-primary" disabled style={{ opacity: 0.6, cursor: 'not-allowed' }}>🔒 Awaiting Approval</button>
+                  ) : showFlagExisting ? (
+                    <button
+                      disabled={!existingTeamDetails.trim()}
+                      onClick={() => { 
+                        setToastMessage('Request redirected to existing team.');
+                        setTimeout(() => setToastMessage(''), 3000);
+                        setSelectedTask(null); 
+                        setShowFlagExisting(false); 
+                        setExistingTeamDetails(''); 
+                      }}
+                      className="btn-primary"
+                      style={{ fontSize: '0.82rem', opacity: existingTeamDetails.trim() ? 1 : 0.5, backgroundColor: '#D68910', borderColor: '#D68910' }}
+                    >
+                      Confirm Redirect
+                    </button>
+                  ) : (
+                    <>
+                      <button 
+                        style={{ 
+                          backgroundColor: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border-color)', 
+                          borderRadius: 'var(--radius-sm)', padding: '7px 14px', fontWeight: 600, fontSize: '0.84rem', cursor: 'pointer' 
+                        }} 
+                        onClick={() => setShowFlagExisting(true)}
+                      >
+                        Redirect / Already Exists
+                      </button>
+                      <button className="btn-primary" onClick={() => setSelectedTask(null)}>Pick This Task</button>
+                    </>
+                  )
                 )}
                 
                 {selectedTask.status !== 'open' && (

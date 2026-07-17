@@ -54,6 +54,34 @@ An enterprise internal portal where employees can:
 
 > Create all lists in SharePoint **before** opening Power Apps. Go to your SharePoint Site → **New → List** for each one.
 
+### Architecture Note: Two-List Architecture for Ideas vs Requests
+To handle casual ideas vs detailed requests seamlessly, we use a **Two-List Architecture**:
+1. **`Idea_Board`**: For quick, casual idea sharing, community voting, and engagement.
+2. **`Automation_Requests`**: For detailed execution data (ROI, hours saved, development status, attachments).
+
+**Data Flow Workflow:**
+- If a user submits via the **Idea Board (Social)**, it goes to the `Idea_Board` list. Once approved by a manager, a Power Automate flow creates a linked record in `Automation_Requests` so developers can pick it up.
+- If a user submits via the **Detailed Request Form**, it goes directly to `Automation_Requests`. A flow will automatically create a lightweight "linked card" in the `Idea_Board` list so the community can still see, vote, and comment on the upcoming project.
+- When a task in `Automation_Requests` is dragged to "Completed" in the Kanban board, a flow auto-updates the original `Idea_Board` item's status to "Deployed".
+
+---
+
+### LIST 1A: `Idea_Board`
+**Purpose:** Social board for quick idea sharing, voting, and basic approvals.
+
+| Column Name | SharePoint Type | Required | Options / Notes |
+|---|---|---|---|
+| **Title** | Single line text | ✅ | The idea title |
+| **Description** | Multiple lines of text | ✅ | User's quick explanation |
+| **Votes** | Number | ✅ | Default: 0. Updated by App |
+| **Status** | Choice | ✅ | Pending Review, Approved, Deployed |
+| **CategoryTag** | Choice | ❌ | AI/ML, OCR, RPA, Flow, App, New (Assigned by Manager/Dev later) |
+| **ApprovedAt** | Date and Time | ❌ | Auto-set when Manager approves |
+| **ApprovedBy** | Person or Group | ❌ | The Manager who approved it |
+| **SubmittedBy** | Person or Group | ✅ | Auto-fill from current user |
+| **PointsEarned** | Number | ✅ | Default: 10 (base points for sharing) |
+| **LinkedRequestID** | Single line text | ❌ | Ref ID linking to Automation_Requests |
+
 ---
 
 ### LIST 1: `Automation_Requests`

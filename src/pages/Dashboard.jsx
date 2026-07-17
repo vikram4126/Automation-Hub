@@ -3,7 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from 'recharts';
-import { Clock, CheckCircle, AlertCircle, Zap, Users, TrendingUp } from 'lucide-react';
+import { Clock, CheckCircle, AlertCircle, Zap, Users, TrendingUp, Trophy } from 'lucide-react';
 import { useRole } from '../context/RoleContext';
 
 const Dashboard = () => {
@@ -115,21 +115,28 @@ const Dashboard = () => {
 
   const renderStandardView = () => (
     <>
-      <div className="kpi-grid">
+      <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
         <div className="card kpi-card">
           <div className="kpi-title">My Open Requests</div>
           <div className="kpi-value">2</div>
-          <div className="kpi-trend">1 in Development</div>
+          <div className="kpi-trend up">1 in Development</div>
         </div>
         <div className="card kpi-card">
           <div className="kpi-title">Ideas Submitted</div>
           <div className="kpi-value">5</div>
-          <div className="kpi-trend up">2 picked up by Team</div>
+          <div className="kpi-trend up">2 Picked Up by Team</div>
         </div>
         <div className="card kpi-card">
           <div className="kpi-title">My Time Saved</div>
           <div className="kpi-value">45 hrs</div>
-          <div className="kpi-trend up">This financial year (Oct–Sep)</div>
+          <div className="kpi-trend up">This Financial Year</div>
+        </div>
+        <div className="card kpi-card">
+          <div className="kpi-title">My Points & Badge</div>
+          <div className="kpi-value" style={{ color: '#F1C40F', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Trophy size={28} /> 450 pts
+          </div>
+          <div className="kpi-trend up">⭐ Innovator · 550 pts to Rising Star</div>
         </div>
       </div>
 
