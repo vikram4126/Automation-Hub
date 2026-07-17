@@ -18,13 +18,12 @@ const Sidebar = () => {
   const { currentRole, ROLES } = useRole();
 
   const allNavItems = [
+    { name: 'Home', path: '/home', icon: Lightbulb, roles: [ROLES.USER, ROLES.LEADERSHIP, ROLES.ADMIN] },
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: [ROLES.USER, ROLES.LEADERSHIP, ROLES.ADMIN] },
     { name: 'Submit Request', path: '/submit', icon: PlusCircle, roles: [ROLES.USER] },
     { name: 'Browse Requests', path: '/browse', icon: KanbanSquare, roles: [ROLES.USER] },
     { name: 'My Requests', path: '/my-requests', icon: FileText, roles: [ROLES.USER] },
     { name: 'My Picked Tasks', path: '/my-tasks', icon: UserCheck, roles: [ROLES.USER] },
-    { name: 'Innovation Board', path: '/innovation', icon: Lightbulb, roles: [ROLES.USER, ROLES.LEADERSHIP] },
-    { name: 'Leaderboard', path: '/leaderboard', icon: Trophy, roles: [ROLES.USER, ROLES.LEADERSHIP] },
     { name: 'Reports', path: '/reports', icon: BarChart2, roles: [ROLES.LEADERSHIP] },
     { name: 'Admin Panel', path: '/admin', icon: Settings, roles: [ROLES.ADMIN] },
   ];

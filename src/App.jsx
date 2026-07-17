@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
+import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import SubmitRequest from './pages/SubmitRequest';
 import BrowseRequests from './pages/BrowseRequests';
@@ -24,7 +25,8 @@ function App() {
             <Header />
             <div className="page-content">
               <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/" element={<Navigate to="/home" replace />} />
+                <Route path="/home" element={<Home />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/submit" element={<SubmitRequest />} />
                 <Route path="/browse" element={<BrowseRequests />} />
